@@ -29,7 +29,9 @@ function trendMonger() {
         q: randomGet(trend_names),
         lang: 'ja',
         locale: 'ja',
-        result_type: 'popular',
+        //result_type: 'popular',
+        //result_type: 'mixed',
+        result_type: 'recent',
         count: 10
       },
       (error, tweets, response) => {
@@ -53,7 +55,8 @@ function trendMonger() {
     );
 
   });
-  setTimeout(trendMonger, 1000*60)
+  //setTimeout(trendMonger, 1000*10)
+  setTimeout(trendMonger, 1000*60*5)
 }
 
 trendMonger();
