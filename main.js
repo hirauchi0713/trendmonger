@@ -1,3 +1,4 @@
+const puppeteer = require('puppeteer')
 const twitter = require('twitter');
 const _ = require('underscore');
 
@@ -25,9 +26,78 @@ async function updateTwitterTrends() {
     return {
       no: index+1,
       word: d.name,
-      by: 'Twitter(JP)'
+      by: ''
     }
   })
+}
+
+function errorHandler(err) {
+  console.log('err:', err)
+  return null
+}
+
+let googleTrends = []
+async function updateGoogleTrends() {
+  const browser = await puppeteer.launch().catch(errorHandler)
+  if (! browser) return
+
+  const page = await browser.newPage().catch(errorHandler)
+  if (! page) { browser.close(); return }
+
+  const err = await page.goto('https://trends.google.co.jp/trends/trendingsearches/daily?geo=JP').catch(errorHandler)
+  if (! err) { browser.close(); return }
+
+  googleTrends = await page.evaluate(() => {
+    let trends = [];
+    document
+      .querySelector('.feed-list-wrapper')
+      .querySelectorAll('.details-top a').forEach(d=>{
+        trends.push(d.textContent.trim())
+      })
+    return trends
+      .map((d, index)=>{
+        return {
+          no: index+1,
+          word: d,
+          by: '(Google)'
+        }
+      });
+  }).catch(errorHandler)
+  if (! googleTrends) {
+    googleTrends = []
+  }
+  browser.close()
+}
+
+let amazonTrends = []
+async function updateAmazonTrends() {
+  const browser = await puppeteer.launch().catch(errorHandler)
+  if (! browser) return
+
+  const page = await browser.newPage().catch(errorHandler)
+  if (! page) { browser.close(); return }
+
+  const err = await page.goto('https://www.amazon.co.jp/trends/aps').catch(errorHandler)
+  if (! err) { browser.close(); return }
+
+  amazonTrends = await page.evaluate(() => {
+    let trends = [];
+    document.querySelectorAll('.trending-keyword').forEach(d=>{
+      trends.push(d.textContent.trim())
+    })
+    return trends
+      .map((d, index)=>{
+        return {
+          no: index+1,
+          word: d,
+          by: '(Amazon)'
+        }
+      });
+  }).catch(errorHandler)
+  if (! amazonTrends) {
+    amazonTrends = []
+  }
+  browser.close()
 }
 
 const retweeted = []
@@ -66,10 +136,15 @@ async function retweet(tweet) {
   return res;
 }
 
+function getAllTrends() {
+  return twitterTrends.concat(googleTrends).concat(amazonTrends)
+}
+
 let yokoku = []
+const YOKOKU_SIZE = 5
 function setYokoku(filteredTrends) {
-  if (filteredTrends.length > 10) {
-    yokoku = _.shuffle(filteredTrends).slice(0, 10);
+  if (filteredTrends.length > YOKOKU_SIZE) {
+    yokoku = _.shuffle(filteredTrends).slice(0, YOKOKU_SIZE);
     return;
   }
 
@@ -77,16 +152,19 @@ function setYokoku(filteredTrends) {
   yokoku = filteredTrends;
   console.log('#1. before yokoku:', yokoku)
   searched = [];
-  filteredTrends = twitterTrends.filter(t=>!yokoku.find(y=>y.word==t.word))
+  filteredTrends = getAllTrends().filter(t=>!yokoku.find(y=>y.word==t.word))
   console.log('#2. twitterTrends:', twitterTrends)
   console.log('#3. filteredTrends:', filteredTrends)
-  yokoku = yokoku.concat(_.shuffle(filteredTrends).slice(0, 10-yokoku.length));
+  yokoku = yokoku.concat(_.shuffle(filteredTrends).slice(0, YOKOKU_SIZE-yokoku.length));
   console.log('#4. after yokoku:', yokoku)
 }
 
 async function tweetYokoku() {
-  const list = yokoku.map(y=>`・${y.word}`).join("\n")
-  const text = `【次10回予告】\n${list}`.substr(0, 140)
+  const list = yokoku.map(y=>{
+    return `・${y.word} ${y.no}位 ${y.by}`
+  }).join("\n")
+
+  const text = `【次${YOKOKU_SIZE}回予告】\n${list}`.substr(0, 140)
   console.log('text:', text)
   const tweetParams = {
     status: text
@@ -117,10 +195,18 @@ async function genYokoku() {
   await updateTwitterTrends();
   console.log('updated twitterTrends:', twitterTrends.map(t=>t.word))
 
-  let filteredTrends = twitterTrends.filter(t=>!searched.includes(t.word))
+  await updateGoogleTrends();
+  console.log('updated googleTrends:', googleTrends.map(t=>t.word))
+
+  await updateAmazonTrends();
+  console.log('updated amazonTrends:', amazonTrends.map(t=>t.word))
+
+  let allTrends = getAllTrends()
+
+  let filteredTrends = allTrends.filter(t=>!searched.includes(t.word))
   if (filteredTrends.length == 0) {
     searched = [];
-    filteredTrends = twitterTrends;
+    filteredTrends = getAllTrends()
   }
   console.log('filteredTrends:', filteredTrends.map(t=>t.word))
 
@@ -137,4 +223,11 @@ function tick() {
   setTimeout(tick, 1000*60*5)
 }
 
-tick();
+
+!(async() => {
+  try {
+    tick();
+  } catch(e) {
+    console.error(e)
+  }
+})()
