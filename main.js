@@ -4,6 +4,8 @@ const _ = require('underscore');
 
 require('dotenv').config();
 
+const puppOpt = { executablePath: '/home/admin/chromium/latest/chrome' }
+
 function randomGet(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
@@ -38,7 +40,7 @@ function errorHandler(err) {
 
 let googleTrends = []
 async function updateGoogleTrends() {
-  const browser = await puppeteer.launch().catch(errorHandler)
+  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
   if (! browser) return
 
   const page = await browser.newPage().catch(errorHandler)
@@ -71,7 +73,7 @@ async function updateGoogleTrends() {
 
 let amazonTrends = []
 async function updateAmazonTrends() {
-  const browser = await puppeteer.launch().catch(errorHandler)
+  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
   if (! browser) return
 
   const page = await browser.newPage().catch(errorHandler)
