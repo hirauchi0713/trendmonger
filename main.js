@@ -4,7 +4,11 @@ const _ = require('underscore');
 
 require('dotenv').config();
 
-const puppOpt = { executablePath: '/home/admin/chromium/latest/chrome' }
+const puppOpt = { }
+
+if (process.env.PUPP_EXECUTABLE_PATH) {
+  puppOpt.executablePath = process.env.PUPP_EXECUTABLE_PATH
+}
 
 function randomGet(array) {
   return array[Math.floor(Math.random() * array.length)];
@@ -118,7 +122,9 @@ async function search(trend) {
   if (!tweets) {
     return null;
   }
-  const filtered_tweets = tweets.statuses.filter(t=>!retweeted.includes(t.id_str))
+  const filtered_tweets = tweets.statuses.filter(t=>{
+    return !retweeted.includes(t.id_str) && !t.user.name.match(/トレンド/)
+  })
   if (filtered_tweets.length == 0) {
     return null;
   }
