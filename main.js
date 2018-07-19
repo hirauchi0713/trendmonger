@@ -123,7 +123,11 @@ async function search(trend) {
     return null;
   }
   const filtered_tweets = tweets.statuses.filter(t=>{
-    return !retweeted.includes(t.id_str) && !t.user.name.match(/トレンド/)
+    return ![
+      retweeted.includes(t.id_str),  // すでにリツイートしてるなら弾く
+      t.user.name.match(/トレンド/), // 自分を含め、トレンド系は弾く
+      t.user.verified,               // 公式アカウントは弾く
+      ].find(a=>a)
   })
   if (filtered_tweets.length == 0) {
     return null;
