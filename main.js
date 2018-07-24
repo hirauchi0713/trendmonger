@@ -123,11 +123,11 @@ async function search(trend) {
     return null;
   }
   const filtered_tweets = tweets.statuses.filter(t=>{
-    return ![
-      retweeted.includes(t.id_str),  // すでにリツイートしてるなら弾く
-      t.user.name.match(/トレンド/), // 自分を含め、トレンド系は弾く
-      t.user.verified,               // 公式アカウントは弾く
-      ].find(a=>a)
+    if (retweeted.includes(t.id_str))         { return false } // すでにリツイートしてるなら弾く
+    if (t.text.match(/トレンド/))             { return false } // トレンド系は弾く
+    if (t.user.screen_name.match(/トレンド/)) { return false } // 自分を含め、トレンド系は弾く
+    if (t.user.verified)                      { return false } // 公式アカウントは弾く
+    return true
   })
   if (filtered_tweets.length == 0) {
     return null;
