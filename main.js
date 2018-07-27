@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer')
 const twitter = require('twitter');
 const _ = require('underscore');
+const Store = require('./Store')
 
 require('dotenv').config();
 
@@ -24,11 +25,20 @@ const client = new twitter({
 // https://lab.syncer.jp/Tool/WOEID-Lookup/
 const woeid_japan = '23424856';
 
-let twitterTrends = []
+const state = new Store(__dirname + '/.state.js')
+state.load({
+  twitterTrends: [],
+  amazonTrends : [],
+  googleTrends : [],
+  retweeted    : [],
+  searched     : [],
+  yokoku       : [],
+})
+
 async function updateTwitterTrends() {
   const trendParams = {id: woeid_japan };
   const trends = await client.get('trends/place', trendParams).catch(err=>null)
-  twitterTrends = trends[0].trends.map((d, index) => {
+  state.data.twitterTrends = trends[0].trends.map((d, index) => {
     return {
       no: index+1,
       word: d.name,
@@ -42,7 +52,6 @@ function errorHandler(err) {
   return null
 }
 
-let googleTrends = []
 async function updateGoogleTrends() {
   const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
   if (! browser) return
@@ -53,7 +62,7 @@ async function updateGoogleTrends() {
   const err = await page.goto('https://trends.google.co.jp/trends/trendingsearches/daily?geo=JP').catch(errorHandler)
   if (! err) { browser.close(); return }
 
-  googleTrends = await page.evaluate(() => {
+  state.data.googleTrends = await page.evaluate(() => {
     let trends = [];
     document
       .querySelector('.feed-list-wrapper')
@@ -69,13 +78,12 @@ async function updateGoogleTrends() {
         }
       });
   }).catch(errorHandler)
-  if (! googleTrends) {
-    googleTrends = []
+  if (! state.data.googleTrends) {
+    state.data.googleTrends = []
   }
   browser.close()
 }
 
-let amazonTrends = []
 async function updateAmazonTrends() {
   const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
   if (! browser) return
@@ -86,7 +94,7 @@ async function updateAmazonTrends() {
   const err = await page.goto('https://www.amazon.co.jp/trends/aps').catch(errorHandler)
   if (! err) { browser.close(); return }
 
-  amazonTrends = await page.evaluate(() => {
+  state.data.amazonTrends = await page.evaluate(() => {
     let trends = [];
     document.querySelectorAll('.trending-keyword').forEach(d=>{
       trends.push(d.textContent.trim())
@@ -100,14 +108,12 @@ async function updateAmazonTrends() {
         }
       });
   }).catch(errorHandler)
-  if (! amazonTrends) {
-    amazonTrends = []
+  if (! state.data.amazonTrends) {
+    state.data.amazonTrends = []
   }
   browser.close()
 }
 
-const retweeted = []
-let searched = []
 async function search(trend) {
   const searchParams = {
     q: trend.word,
@@ -123,7 +129,7 @@ async function search(trend) {
     return null;
   }
   const filtered_tweets = tweets.statuses.filter(t=>{
-    if (retweeted.includes(t.id_str))         { return false } // すでにリツイートしてるなら弾く
+    if (state.data.retweeted.includes(t.id_str))   { return false } // すでにリツイートしてるなら弾く
     if (t.text.match(/トレンド/))             { return false } // トレンド系は弾く
     if (t.user.screen_name.match(/トレンド/)) { return false } // 自分を含め、トレンド系は弾く
     if (t.user.verified)                      { return false } // 公式アカウントは弾く
@@ -132,7 +138,7 @@ async function search(trend) {
   if (filtered_tweets.length == 0) {
     return null;
   }
-  searched.push(trend.word)
+  state.data.searched.push(trend.word)
   return _.shuffle(filtered_tweets)[0]
 }
 
@@ -143,37 +149,36 @@ async function retweet(tweet) {
       return null;
     })
   if (res) {
-    retweeted.push(tweet.id_str)
+    state.data.retweeted.push(tweet.id_str)
   }
   return res;
 }
 
 function getAllTrends() {
-  return twitterTrends.concat(googleTrends).concat(amazonTrends)
+  return state.data.twitterTrends.concat(state.data.googleTrends).concat(state.data.amazonTrends)
 }
 
-let yokoku = []
 const YOKOKU_SIZE = 5
 function setYokoku(filteredTrends) {
   if (filteredTrends.length > YOKOKU_SIZE) {
-    yokoku = _.shuffle(filteredTrends).slice(0, YOKOKU_SIZE);
+    state.data.yokoku = _.shuffle(filteredTrends).slice(0, YOKOKU_SIZE);
     return;
   }
 
   console.log('### short yokoku ###')
-  yokoku = filteredTrends;
-  console.log('#1. before yokoku:', yokoku)
-  searched = [];
-  filteredTrends = getAllTrends().filter(t=>!yokoku.find(y=>y.word==t.word))
-  console.log('#2. twitterTrends:', twitterTrends)
+  state.data.yokoku = filteredTrends;
+  console.log('#1. before yokoku:', state.data.yokoku)
+  state.data.searched = [];
+  filteredTrends = getAllTrends().filter(t=>!state.data.yokoku.find(y=>y.word==t.word))
+  console.log('#2. twitterTrends:', state.data.twitterTrends)
   console.log('#3. filteredTrends:', filteredTrends)
-  yokoku = yokoku.concat(_.shuffle(filteredTrends).slice(0, YOKOKU_SIZE-yokoku.length));
-  console.log('#4. after yokoku:', yokoku)
+  state.data.yokoku = state.data.yokoku.concat(_.shuffle(filteredTrends).slice(0, YOKOKU_SIZE-state.data.yokoku.length));
+  console.log('#4. after yokoku:', state.data.yokoku)
 }
 
 async function tweetYokoku() {
-  const list = yokoku.map(y=>{
-    return `・${y.word} ${y.no}位 ${y.by}`
+  const list = state.data.yokoku.map(y=>{
+    return `・ ${y.word} ${y.no}位 ${y.by}`
   }).join("\n")
 
   const text = `【次${YOKOKU_SIZE}回予告】\n${list}`.substr(0, 140)
@@ -189,11 +194,11 @@ async function tweetYokoku() {
 async function main() {
   console.log('---------start main---------')
 
-  if (yokoku.length == 0) {
+  if (state.data.yokoku.length == 0) {
     await genYokoku();
   }
 
-  const trend = yokoku.shift();
+  const trend = state.data.yokoku.shift();
   console.log('target trend:', trend);
 
   const tweet = await search(trend);
@@ -201,29 +206,31 @@ async function main() {
 
   const res = await retweet(tweet);
   console.log('result:', res != null ? 'ok' : 'ng');
+
+  state.save()
 }
 
 async function genYokoku() {
   await updateTwitterTrends();
-  console.log('updated twitterTrends:', twitterTrends.map(t=>t.word))
+  console.log('updated twitterTrends:', state.data.twitterTrends.map(t=>t.word))
 
-  await updateGoogleTrends();
-  console.log('updated googleTrends:', googleTrends.map(t=>t.word))
+  await updateGoogleTrends().catch(e=>console.log(e));
+  console.log('updated googleTrends:', state.data.googleTrends.map(t=>t.word))
 
-  await updateAmazonTrends();
-  console.log('updated amazonTrends:', amazonTrends.map(t=>t.word))
+  await updateAmazonTrends().catch(e=>console.log(e));
+  console.log('updated amazonTrends:', state.data.amazonTrends.map(t=>t.word))
 
   let allTrends = getAllTrends()
 
-  let filteredTrends = allTrends.filter(t=>!searched.includes(t.word))
+  let filteredTrends = allTrends.filter(t=>!state.data.searched.includes(t.word))
   if (filteredTrends.length == 0) {
-    searched = [];
+    state.data.searched = [];
     filteredTrends = getAllTrends()
   }
   console.log('filteredTrends:', filteredTrends.map(t=>t.word))
 
   setYokoku(filteredTrends);
-  console.log('yokoku:', yokoku)
+  console.log('yokoku:', state.data.yokoku)
 
   tweetYokoku();
 }
