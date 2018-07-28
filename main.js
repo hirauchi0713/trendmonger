@@ -5,6 +5,10 @@ const Store = require('./Store')
 
 require('dotenv').config();
 
+// Hatena
+// http://d.hatena.ne.jp/keyword/
+
+module.exports = Store
 const puppOpt = { }
 
 if (process.env.PUPP_EXECUTABLE_PATH) {
@@ -38,6 +42,9 @@ state.load({
 async function updateTwitterTrends() {
   const trendParams = {id: woeid_japan };
   const trends = await client.get('trends/place', trendParams).catch(err=>null)
+  if (! trends) {
+    return []
+  }
   state.data.twitterTrends = trends[0].trends.map((d, index) => {
     return {
       no: index+1,
@@ -128,13 +135,18 @@ async function search(trend) {
   if (!tweets) {
     return null;
   }
+  //console.log('tweets(before filter)', tweets.statuses.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
   const filtered_tweets = tweets.statuses.filter(t=>{
     if (state.data.retweeted.includes(t.id_str))   { return false } // すでにリツイートしてるなら弾く
     if (t.text.match(/トレンド/))             { return false } // トレンド系は弾く
-    if (t.user.screen_name.match(/トレンド/)) { return false } // 自分を含め、トレンド系は弾く
+    if (t.user.screen_name.match(/trend/))    { return false } // トレンド系は弾く
+    if (t.user.name.match(/トレンド/))        { return false } // トレンド系は弾く
     if (t.user.verified)                      { return false } // 公式アカウントは弾く
+    if (t.user.name.match(/公式/))            { return false } // 公式アカウントは弾く
     return true
   })
+  //console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
+  //console.log('tweets(after filter) count', filtered_tweets.length)
   if (filtered_tweets.length == 0) {
     return null;
   }
@@ -202,7 +214,7 @@ async function main() {
   console.log('target trend:', trend);
 
   const tweet = await search(trend);
-  console.log('tweet:', {id_str: tweet.id_str, text: tweet.text });
+  console.log('tweet:', {id_str: tweet.id_str, text: tweet.text, verified: tweet.user.verified });
 
   const res = await retweet(tweet);
   console.log('result:', res != null ? 'ok' : 'ng');
@@ -211,6 +223,8 @@ async function main() {
 }
 
 async function genYokoku() {
+  console.log('genYokoku')
+
   await updateTwitterTrends();
   console.log('updated twitterTrends:', state.data.twitterTrends.map(t=>t.word))
 
