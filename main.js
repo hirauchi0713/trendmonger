@@ -131,7 +131,9 @@ async function search(trend) {
     result_type: 'recent',
     count: 10
   }
+  console.log('search: start search/tweets')
   const tweets = await client.get('search/tweets', searchParams).catch(err=>null)
+  console.log('search: end search/tweets')
   if (!tweets) {
     return null;
   }
@@ -141,6 +143,8 @@ async function search(trend) {
     if (t.text.match(/トレンド/))             { return false } // トレンド系は弾く
     if (t.text.match(/フォロー/))             { return false } // フォロー勧誘系は弾く
     if (t.text.match(/フォロ爆/))             { return false } // フォロー勧誘系は弾く
+    if (t.text.match(/HOTワード/i))           { return false } // トレンド系は弾く
+    if (t.text.match(/amzn\.to/))             { return false } // amazonアフィリエイト系は弾く
     if (t.user.screen_name.match(/trend/i))   { return false } // トレンド系は弾く
     if (t.user.name.match(/トレンド/))        { return false } // トレンド系は弾く
     if (t.user.verified)                      { return false } // 公式アカウントは弾く
@@ -160,6 +164,9 @@ async function search(trend) {
 }
 
 async function retweet(tweet) {
+  if (! tweet) {
+    return null
+  }
   const res = await client.post('statuses/retweet/'+tweet.id_str, {id: tweet.id_str})
     .catch(e => {
       console.log(JSON.stringify(e, null, '  '));
@@ -219,12 +226,16 @@ async function main() {
   console.log('target trend:', trend);
 
   const tweet = await search(trend);
-  console.log('tweet:', {id_str: tweet.id_str, text: tweet.text, verified: tweet.user.verified });
+  if (tweet) {
+    console.log('tweet:', {id_str: tweet.id_str, text: tweet.text, verified: tweet.user.verified });
 
-  const res = await retweet(tweet);
-  console.log('result:', res != null ? 'ok' : 'ng');
-
+    const res = await retweet(tweet);
+    console.log('result:', res != null ? 'ok' : 'ng');
+  } else {
+    console.log('no tweet');
+  }
   state.save()
+  console.log('---------end main---------')
 }
 
 async function genYokoku() {
