@@ -139,10 +139,13 @@ async function search(trend) {
   const filtered_tweets = tweets.statuses.filter(t=>{
     if (state.data.retweeted.includes(t.id_str))   { return false } // すでにリツイートしてるなら弾く
     if (t.text.match(/トレンド/))             { return false } // トレンド系は弾く
-    if (t.user.screen_name.match(/trend/))    { return false } // トレンド系は弾く
+    if (t.text.match(/フォロー/))             { return false } // フォロー勧誘系は弾く
+    if (t.user.screen_name.match(/trend/i))   { return false } // トレンド系は弾く
     if (t.user.name.match(/トレンド/))        { return false } // トレンド系は弾く
     if (t.user.verified)                      { return false } // 公式アカウントは弾く
     if (t.user.name.match(/公式/))            { return false } // 公式アカウントは弾く
+    if (t.user.name.match(/フォロー/))        { return false } // フォロー勧誘系は弾く
+    if (t.user.name.match(/bot/i))            { return false } // bot系は弾く
     return true
   })
   //console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
