@@ -138,6 +138,9 @@ async function search(trend) {
     return null;
   }
   //console.log('tweets(before filter)', tweets.statuses.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
+  function counter(str,seq) {
+      return str.split(seq).length - 1;
+  }
   const filtered_tweets = tweets.statuses.filter(t=>{
     if (state.data.retweeted.includes(t.id_str))   { return false } // すでにリツイートしてるなら弾く
     if (t.text.match(/トレンド/))             { return false } // トレンド系は弾く
@@ -152,6 +155,7 @@ async function search(trend) {
     if (t.user.name.match(/フォロー/))        { return false } // フォロー勧誘系は弾く
     if (t.user.name.match(/フォロ爆/))        { return false } // フォロー勧誘系は弾く
     if (t.user.name.match(/bot/i))            { return false } // bot系は弾く
+    if (counter(t.text, '#') >= 2)            { return false } // ハッシュが２個以上あるならスパムっぽいので弾く
     return true
   })
   //console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
