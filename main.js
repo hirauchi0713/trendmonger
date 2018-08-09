@@ -31,12 +31,13 @@ const woeid_japan = '23424856';
 
 const state = new Store(__dirname + '/.state.js')
 state.load({
-  twitterTrends: [],
-  amazonTrends : [],
-  googleTrends : [],
-  retweeted    : [],
-  searched     : [],
-  yokoku       : [],
+  twitterTrends : [],
+  buhitterTrends: [],
+  amazonTrends  : [],
+  googleTrends  : [],
+  retweeted     : [],
+  searched      : [],
+  yokoku        : [],
 })
 
 async function updateTwitterTrends() {
@@ -91,6 +92,38 @@ async function updateGoogleTrends() {
   browser.close()
 }
 
+async function updateBuhitterTrends() {
+  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
+  if (! browser) return
+
+  const page = await browser.newPage().catch(errorHandler)
+  if (! page) { browser.close(); return }
+
+  const err = await page.goto('https://buhitter.com/trend').catch(errorHandler)
+  if (! err) { browser.close(); return }
+
+  state.data.buhitterTrends = await page.evaluate(() => {
+    let trends = [];
+    for(let i = 0; i < 20; i++) {
+      const no = i+1
+      const el = document.getElementById(`no${no}`)
+      const words = []
+      el.querySelectorAll('.account-link').forEach(e=>words.push(e.textContent.replace(/[ \n]*/, '')))
+      trends.push({
+        no: no,
+        word: words.join(' ').replace(/^ /, ''),
+        by: '(Buhitter)',
+        id_str: el.querySelector('.text-right a').getAttribute('href').split('/').pop()
+      })
+    }
+    return trends
+  }).catch(errorHandler)
+  if (! state.data.buhitterTrends) {
+    state.data.buhitterTrends = []
+  }
+  browser.close()
+}
+
 async function updateAmazonTrends() {
   const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
   if (! browser) return
@@ -138,7 +171,7 @@ async function search(trend) {
   if (!tweets) {
     return null;
   }
-  console.log('tweets(before filter)', tweets.statuses.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
+  //console.log('tweets(before filter)', tweets.statuses.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
   function counter(str,seq) {
       return str.split(seq).length - 1;
   }
@@ -172,7 +205,7 @@ async function search(trend) {
   const filtered_tweets = tweets.statuses.filter(t=>{
     return !filters.some(f=>f(t))
   })
-  console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
+  //console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
   //console.log('tweets(after filter) count', filtered_tweets.length)
   if (filtered_tweets.length == 0) {
     return null;
@@ -190,14 +223,23 @@ async function retweet(tweet) {
       console.log(JSON.stringify(e, null, '  '));
       return null;
     })
-  if (res) {
-    state.data.retweeted.push(tweet.id_str)
-  }
+  return res;
+}
+
+async function raw_retweet(id_str) {
+  const res = await client.post('statuses/retweet/'+id_str, {id: id_str})
+    .catch(e => {
+      console.log(JSON.stringify(e, null, '  '));
+      return null;
+    })
   return res;
 }
 
 function getAllTrends() {
-  return state.data.twitterTrends.concat(state.data.googleTrends).concat(state.data.amazonTrends)
+  return state.data.twitterTrends
+    .concat(state.data.googleTrends)
+    .concat(state.data.amazonTrends)
+    .concat(state.data.buhitterTrends)
 }
 
 const YOKOKU_SIZE = 5
@@ -243,14 +285,19 @@ async function main() {
   const trend = state.data.yokoku.shift();
   console.log('target trend:', trend);
 
-  const tweet = await search(trend);
-  if (tweet) {
-    console.log('tweet:', {id_str: tweet.id_str, text: tweet.text, verified: tweet.user.verified });
-
-    const res = await retweet(tweet);
+  if (trend.by === '(Buhitter)') {
+    const res = await raw_retweet(trend.id_str);
     console.log('result:', res != null ? 'ok' : 'ng');
   } else {
-    console.log('no tweet');
+    const tweet = await search(trend);
+    if (tweet) {
+      console.log('tweet:', {id_str: tweet.id_str, text: tweet.text, verified: tweet.user.verified });
+
+      const res = await retweet(tweet);
+      console.log('result:', res != null ? 'ok' : 'ng');
+    } else {
+      console.log('no tweet');
+    }
   }
   state.save()
   console.log('---------end main---------')
@@ -261,6 +308,10 @@ async function genYokoku() {
 
   await updateTwitterTrends();
   console.log('updated twitterTrends:', state.data.twitterTrends.map(t=>t.word))
+
+  await updateBuhitterTrends();
+  //console.log('updated buhitterTrends:', state.data.buhitterTrends.map(t=>t.word))
+  console.log('updated buhitterTrends:', state.data.buhitterTrends)
 
   await updateGoogleTrends().catch(e=>console.log(e));
   console.log('updated googleTrends:', state.data.googleTrends.map(t=>t.word))
