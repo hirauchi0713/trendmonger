@@ -210,7 +210,6 @@ async function search(trend) {
   if (filtered_tweets.length == 0) {
     return null;
   }
-  state.data.searched.push(trend.word)
   return _.shuffle(filtered_tweets)[0]
 }
 
@@ -283,6 +282,7 @@ async function main() {
   }
 
   const trend = state.data.yokoku.shift();
+  state.data.searched.push(trend.word)
   console.log('target trend:', trend);
 
   if (trend.by === '(Buhitter)') {
