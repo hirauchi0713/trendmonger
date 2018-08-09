@@ -121,6 +121,7 @@ async function updateAmazonTrends() {
   browser.close()
 }
 
+
 async function search(trend) {
   const searchParams = {
     q: trend.word,
@@ -129,7 +130,7 @@ async function search(trend) {
     //result_type: 'popular',
     //result_type: 'mixed',
     result_type: 'recent',
-    count: 10
+    count: 100
   }
   console.log('search: start search/tweets')
   const tweets = await client.get('search/tweets', searchParams).catch(err=>null)
@@ -137,28 +138,41 @@ async function search(trend) {
   if (!tweets) {
     return null;
   }
-  //console.log('tweets(before filter)', tweets.statuses.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
+  console.log('tweets(before filter)', tweets.statuses.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
   function counter(str,seq) {
       return str.split(seq).length - 1;
   }
+  function filter(name, cond) {
+    return function(t) {
+      if (cond(t)) {
+        console.log(`FILTERED[${name}]:`, t)
+        return true
+      } else {
+        return false
+      }
+    }
+  }
+  const filters = [
+    filter('すでにリツイートしてるなら弾く',                 t=>t.retweeted),
+    filter('不適切かもしれないのは弾く',                     t=>t.possibly_sensitive),
+    filter('トレンド系は弾く',                               t=>t.text.match(/トレンド/)),
+    filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロー/)),
+    filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロ爆/)),
+    filter('トレンド系は弾く',                               t=>t.text.match(/HOTワード/i)),
+    filter('amazonアフィリエイト系は弾く',                   t=>t.text.match(/amzn\.to/)),
+    filter('トレンド系は弾く',                               t=>t.user.screen_name.match(/trend/i)),
+    filter('トレンド系は弾く',                               t=>t.user.name.match(/トレンド/)),
+    filter('公式アカウントは弾く',                           t=>t.user.verified),
+    filter('公式アカウントは弾く',                           t=>t.user.name.match(/公式/)),
+    filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロー/)),
+    filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロ爆/)),
+    filter('bot系は弾く',                                    t=>t.user.name.match(/bot/i)),
+    filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, '#')>=2),
+  ]
   const filtered_tweets = tweets.statuses.filter(t=>{
-    if (state.data.retweeted.includes(t.id_str))   { return false } // すでにリツイートしてるなら弾く
-    if (t.text.match(/トレンド/))             { return false } // トレンド系は弾く
-    if (t.text.match(/フォロー/))             { return false } // フォロー勧誘系は弾く
-    if (t.text.match(/フォロ爆/))             { return false } // フォロー勧誘系は弾く
-    if (t.text.match(/HOTワード/i))           { return false } // トレンド系は弾く
-    if (t.text.match(/amzn\.to/))             { return false } // amazonアフィリエイト系は弾く
-    if (t.user.screen_name.match(/trend/i))   { return false } // トレンド系は弾く
-    if (t.user.name.match(/トレンド/))        { return false } // トレンド系は弾く
-    if (t.user.verified)                      { return false } // 公式アカウントは弾く
-    if (t.user.name.match(/公式/))            { return false } // 公式アカウントは弾く
-    if (t.user.name.match(/フォロー/))        { return false } // フォロー勧誘系は弾く
-    if (t.user.name.match(/フォロ爆/))        { return false } // フォロー勧誘系は弾く
-    if (t.user.name.match(/bot/i))            { return false } // bot系は弾く
-    if (counter(t.text, '#') >= 2)            { return false } // ハッシュが２個以上あるならスパムっぽいので弾く
-    return true
+    return !filters.some(f=>f(t))
   })
-  //console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
+  console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
   //console.log('tweets(after filter) count', filtered_tweets.length)
   if (filtered_tweets.length == 0) {
     return null;
