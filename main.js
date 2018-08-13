@@ -5,6 +5,9 @@ const Store = require('./Store')
 
 require('dotenv').config();
 
+const TwitterTrend = require('./TwitterTrend.js')
+
+
 // Hatena
 // http://d.hatena.ne.jp/keyword/
 
@@ -26,9 +29,6 @@ const client = new twitter({
   access_token_secret: process.env.TW_TOKEN_SECRET,
 });
 
-// https://lab.syncer.jp/Tool/WOEID-Lookup/
-const woeid_japan = '23424856';
-
 const state = new Store(__dirname + '/.state.js')
 state.load({
   twitterTrends : [],
@@ -40,19 +40,11 @@ state.load({
   yokoku        : [],
 })
 
+const twitterTrends = new TwitterTrend(state.data, 'twitterTrends', client)
+
+
 async function updateTwitterTrends() {
-  const trendParams = {id: woeid_japan };
-  const trends = await client.get('trends/place', trendParams).catch(err=>null)
-  if (! trends) {
-    return []
-  }
-  state.data.twitterTrends = trends[0].trends.map((d, index) => {
-    return {
-      no: index+1,
-      word: d.name,
-      by: ''
-    }
-  })
+  await twitterTrends.update()
 }
 
 function errorHandler(err) {
@@ -60,68 +52,16 @@ function errorHandler(err) {
   return null
 }
 
+const GoogleTrend = require('./GoogleTrend.js')
+const googleTrends = new GoogleTrend(state, 'googleTrends')
 async function updateGoogleTrends() {
-  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
-  if (! browser) return
-
-  const page = await browser.newPage().catch(errorHandler)
-  if (! page) { browser.close(); return }
-
-  const err = await page.goto('https://trends.google.co.jp/trends/trendingsearches/daily?geo=JP').catch(errorHandler)
-  if (! err) { browser.close(); return }
-
-  state.data.googleTrends = await page.evaluate(() => {
-    let trends = [];
-    document
-      .querySelector('.feed-list-wrapper')
-      .querySelectorAll('.details-top a').forEach(d=>{
-        trends.push(d.textContent.trim())
-      })
-    return trends
-      .map((d, index)=>{
-        return {
-          no: index+1,
-          word: d,
-          by: '(Google)'
-        }
-      });
-  }).catch(errorHandler)
-  if (! state.data.googleTrends) {
-    state.data.googleTrends = []
-  }
-  browser.close()
+  await googleTrends.update()
 }
 
+const BuhitterTrend = require('./BuhitterTrend.js')
+const buhitterTrends = new BuhitterTrend(state, 'buhitterTrends')
 async function updateBuhitterTrends() {
-  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
-  if (! browser) return
-
-  const page = await browser.newPage().catch(errorHandler)
-  if (! page) { browser.close(); return }
-
-  const err = await page.goto('https://buhitter.com/trend').catch(errorHandler)
-  if (! err) { browser.close(); return }
-
-  state.data.buhitterTrends = await page.evaluate(() => {
-    let trends = [];
-    for(let i = 0; i < 20; i++) {
-      const no = i+1
-      const el = document.getElementById(`no${no}`)
-      const words = []
-      el.querySelectorAll('.account-link').forEach(e=>words.push(e.textContent.replace(/[ \n]*/, '')))
-      trends.push({
-        no: no,
-        word: words.join(' ').replace(/^ /, ''),
-        by: '(Buhitter)',
-        id_str: el.querySelector('.text-right a').getAttribute('href').split('/').pop()
-      })
-    }
-    return trends
-  }).catch(errorHandler)
-  if (! state.data.buhitterTrends) {
-    state.data.buhitterTrends = []
-  }
-  browser.close()
+  await buhitterTrends.update()
 }
 
 async function updateGithubTrends() {
