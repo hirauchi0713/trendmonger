@@ -7,7 +7,7 @@ class BuhitterTrend extends TrendScraper {
     super(state, key, TargetURL)
   }
 
-  async updateMain() {
+  async updateMain(page) {
     return await page.evaluate(() => {
       const trends = [];
       for(let i = 0; i < 20; i++) {
