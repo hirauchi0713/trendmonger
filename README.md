@@ -16,5 +16,5 @@
 [twitter]: https://developer.twitter.com/en/docs/trends/trends-for-location/api-reference/get-trends-place.html
 [google]: https://trends.google.co.jp/trends/trendingsearches/daily?geo=JP
 [amazon]: https://www.amazon.co.jp/trends/aps
-[github]: https://github.com/trending
 [buhitter]: https://buhitter.com/trend
+[github]: http://github-trends.ryotarai.info/rss/github_trends_all_daily.rss

@@ -124,6 +124,34 @@ async function updateBuhitterTrends() {
   browser.close()
 }
 
+async function updateGithubTrends() {
+  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
+  if (! browser) return
+
+  const page = await browser.newPage().catch(errorHandler)
+  if (! page) { browser.close(); return }
+
+  const err = await page.goto('http://github-trends.ryotarai.info/rss/github_trends_all_daily.rss').catch(errorHandler)
+  if (! err) { browser.close(); return }
+
+  state.data.githubTrends = await page.evaluate(() => {
+    let trends = [];
+    document.querySelectorAll('item title').forEach((d,idx)=>{
+      trends.push({
+        no: idx+1,
+        word: d.textContent.replace(/ (.*)/, ''),
+        by: '(Github)'
+      })
+    })
+    return trends.slice(0, 5) // 上位5位
+  }).catch(errorHandler)
+
+  if (! state.data.githubTrends) {
+    state.data.githubTrends = []
+  }
+  browser.close()
+}
+
 async function updateAmazonTrends() {
   const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
   if (! browser) return
@@ -239,6 +267,7 @@ function getAllTrends() {
     .concat(state.data.googleTrends)
     .concat(state.data.amazonTrends)
     .concat(state.data.buhitterTrends)
+    .concat(state.data.githubTrends)
 }
 
 const YOKOKU_SIZE = 5
@@ -308,6 +337,10 @@ async function genYokoku() {
 
   await updateTwitterTrends();
   console.log('updated twitterTrends:', state.data.twitterTrends.map(t=>t.word))
+
+  await updateGithubTrends();
+  //console.log('updated githubTrends:', state.data.githubTrends.map(t=>t.word))
+  console.log('updated githubTrends:', state.data.githubTrends)
 
   await updateBuhitterTrends();
   //console.log('updated buhitterTrends:', state.data.buhitterTrends.map(t=>t.word))
