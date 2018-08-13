@@ -229,6 +229,7 @@ async function search(trend) {
     filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロ爆/)),
     filter('bot系は弾く',                                    t=>t.user.name.match(/bot/i)),
     filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, '#')>=2),
+    filter('メンションは弾く',                               t=>counter(t.text, '@')>=1),
   ]
   const filtered_tweets = tweets.statuses.filter(t=>{
     return !filters.some(f=>f(t))
