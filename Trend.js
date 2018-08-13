@@ -5,17 +5,17 @@ class Trend {
     return null
   }
 
-  constructor(state, key) {
-    this.state = state
+  constructor(data, key) {
+    this.data = data
     this.key = key
   }
 
   getTrends() {
-    return this.state[this.key]
+    return this.data[this.key]
   }
 
   setTrends(t) {
-    this.state[this.key] = t == null ? [] : t
+    this.data[this.key] = t == null ? [] : t
   }
 
   hasTrends() {

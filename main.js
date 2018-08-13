@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const TwitterTrend = require('./TwitterTrend.js')
 
+process.on('unhandledRejection', console.dir);
 
 // Hatena
 // http://d.hatena.ne.jp/keyword/
@@ -53,43 +54,21 @@ function errorHandler(err) {
 }
 
 const GoogleTrend = require('./GoogleTrend.js')
-const googleTrends = new GoogleTrend(state, 'googleTrends')
+const googleTrends = new GoogleTrend(state.data, 'googleTrends')
 async function updateGoogleTrends() {
   await googleTrends.update()
 }
 
 const BuhitterTrend = require('./BuhitterTrend.js')
-const buhitterTrends = new BuhitterTrend(state, 'buhitterTrends')
+const buhitterTrends = new BuhitterTrend(state.data, 'buhitterTrends')
 async function updateBuhitterTrends() {
   await buhitterTrends.update()
 }
 
+const GithubTrend = require('./GithubTrend.js')
+const githubTrends = new GithubTrend(state.data, 'githubTrends')
 async function updateGithubTrends() {
-  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
-  if (! browser) return
-
-  const page = await browser.newPage().catch(errorHandler)
-  if (! page) { browser.close(); return }
-
-  const err = await page.goto('http://github-trends.ryotarai.info/rss/github_trends_all_daily.rss').catch(errorHandler)
-  if (! err) { browser.close(); return }
-
-  state.data.githubTrends = await page.evaluate(() => {
-    let trends = [];
-    document.querySelectorAll('item title').forEach((d,idx)=>{
-      trends.push({
-        no: idx+1,
-        word: d.textContent.replace(/ (.*)/, ''),
-        by: '(Github)'
-      })
-    })
-    return trends.slice(0, 5) // 上位5位
-  }).catch(errorHandler)
-
-  if (! state.data.githubTrends) {
-    state.data.githubTrends = []
-  }
-  browser.close()
+  await githubTrends.update()
 }
 
 async function updateAmazonTrends() {
