@@ -103,6 +103,8 @@ async function search(trend) {
   }
   const filters = [
     filter('すでにリツイートしてるなら弾く',                 t=>t.retweeted),
+    filter('最後が…で切れてるのは判定できないので弾く',     t=>t.text.match(/…$/)),
+    filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, /[#＃]/)>=2),
     filter('不適切かもしれないのは弾く',                     t=>t.possibly_sensitive),
     filter('トレンド系は弾く',                               t=>t.text.match(/トレンド/)),
     filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロー/)),
@@ -116,7 +118,6 @@ async function search(trend) {
     filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロー/)),
     filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロ爆/)),
     filter('bot系は弾く',                                    t=>t.user.name.match(/bot/i)),
-    filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, /[#＃]/)>=2),
     filter('メンションは弾く',                               t=>counter(t.text, /^@/)>=1),
     filter('メンションは弾く',                               t=>counter(t.text, /^.@/)>=1),
     filter('メンションは弾く',                               t=>counter(t.text, /^..@/)>=1),
