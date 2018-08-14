@@ -116,11 +116,11 @@ async function search(trend) {
     filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロー/)),
     filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロ爆/)),
     filter('bot系は弾く',                                    t=>t.user.name.match(/bot/i)),
-    filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, '#')>=2),
+    filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, /[#＃]/)>=2),
     filter('メンションは弾く',                               t=>counter(t.text, '@')>=1),
   ]
   const filtered_tweets = tweets.statuses.filter(t=>{
-    return !filters.some(f=>f(t))
+    return !filters.some(f=>!!f(t))
   })
   //console.log('tweets(after filter)', filtered_tweets.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
   //console.log('tweets(after filter) count', filtered_tweets.length)
