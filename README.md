@@ -8,6 +8,7 @@
   - [Twitterのトレンド][twitter]
   - [Googleの検索ワード][google]
   - [Amazonの急上昇ワード][amazon]
+  - [はてなの注目キーワード][hatena]
 - 各分野
   - [Buhitterの画像][buhitter]
   - [Githubのリポジトリ][github]
@@ -18,3 +19,4 @@
 [amazon]: https://www.amazon.co.jp/trends/aps
 [buhitter]: https://buhitter.com/trend
 [github]: http://github-trends.ryotarai.info/rss/github_trends_all_daily.rss
+[hatena]: http://d.hatena.ne.jp/hotkeyword
