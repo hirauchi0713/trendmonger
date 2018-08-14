@@ -21,7 +21,7 @@ class GithubTrend extends TrendScraper {
         })
       })
       console.log('github 3')
-      return trends.slice(0, 5) // 上位5位
+      return trends.slice(0, 10) // 上位10位
     }).catch(Trend.errorHandler)
   }
 
