@@ -19,7 +19,8 @@ class Trend {
   }
 
   hasTrends() {
-    return this.getTrends() != null && this.getTrends().length != 0
+    //return this.getTrends() != null && this.getTrends().length != 0
+    return false // for #18: とりいそぎキーワードは毎回updateすることにする
   }
 
   async update() {
