@@ -17,13 +17,13 @@ class TrendScraper extends Trend {
     console.log('TrendScraper 1', this.key)
     if (this.hasTrends()) { return }
 
-    console.log('TrendScraper 1-2')
+    console.log('TrendScraper 1-2', this.key)
     const browser = await puppeteer.launch(puppOpt).catch(err=>{
       console.log('puppeteer lanch err', err)
       return null
     })
 
-    console.log('TrendScraper 2')
+    console.log('TrendScraper 2', this.key)
     //const page = await browser.newPage().catch(Trend.errorHandler)
     const page = await browser.newPage().catch(err=>{
       console.log('browser.newPage error', err)
@@ -31,22 +31,22 @@ class TrendScraper extends Trend {
     })
     if (! page) { return }
 
-    console.log('TrendScraper 3')
+    console.log('TrendScraper 3', this.key)
     const err = await page.goto(this.url).catch(Trend.errorHandler)
     //const err = await page.goto(this.url).catch(err=>null)
     if (! err) { return }
 
-    console.log('TrendScraper 4', this.updateMain)
+    console.log('TrendScraper 4', this.key, this.updateMain)
     //const trends = await page.evaluate(this.updateMain).catch(Trend.errorHandler)
     const trends = await this.updateMain(page).catch(Trend.errorHandler)
 
-    console.log('TrendScraper 5', trends)
+    console.log('TrendScraper 5', this.key, trends)
     this.setTrends(trends)
 
-    console.log('TrendScraper 7')
+    console.log('TrendScraper 7', this.key)
     browser.close()
 
-    console.log('TrendScraper end')
+    console.log('TrendScraper end', this.key)
   }
 
 }

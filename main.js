@@ -9,9 +9,6 @@ const TwitterTrend = require('./TwitterTrend.js')
 
 process.on('unhandledRejection', console.dir);
 
-// Hatena
-// http://d.hatena.ne.jp/keyword/
-
 module.exports = Store
 const puppOpt = { }
 
@@ -45,7 +42,9 @@ const GoogleTrend = require('./GoogleTrend.js')
 const BuhitterTrend = require('./BuhitterTrend.js')
 const GithubTrend = require('./GithubTrend.js')
 const AmazonTrend = require('./AmazonTrend.js')
+const HatenaTrend = require('./HatenaTrend.js')
 const trends = [
+  new HatenaTrend(state.data, 'hatenaTrends'),
   new TwitterTrend(state.data, 'twitterTrends', client),
   new GoogleTrend(state.data, 'googleTrends'),
   new BuhitterTrend(state.data, 'buhitterTrends'),
@@ -210,10 +209,11 @@ async function main() {
 async function genYokoku() {
   console.log('genYokoku')
 
-  trends.forEach(async t=>{
+  for(let i = 0; i < trends.length; i++) {
+    const t = trends[i]
     await t.update()
     console.log(`updated ${t.key}:`, t.getTrends().map(t=>t.word))
-  })
+  }
 
   let allTrends = getAllTrends()
 
