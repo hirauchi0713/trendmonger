@@ -41,36 +41,57 @@ state.load({
   yokoku        : [],
 })
 
-const twitterTrends = new TwitterTrend(state.data, 'twitterTrends', client)
-async function updateTwitterTrends() {
-  await twitterTrends.update()
-}
-
 const GoogleTrend = require('./GoogleTrend.js')
-const googleTrends = new GoogleTrend(state.data, 'googleTrends')
-async function updateGoogleTrends() {
-  await googleTrends.update()
-}
-
 const BuhitterTrend = require('./BuhitterTrend.js')
-const buhitterTrends = new BuhitterTrend(state.data, 'buhitterTrends')
-async function updateBuhitterTrends() {
-  await buhitterTrends.update()
-}
-
 const GithubTrend = require('./GithubTrend.js')
-const githubTrends = new GithubTrend(state.data, 'githubTrends')
-async function updateGithubTrends() {
-  await githubTrends.update()
-}
-
 const AmazonTrend = require('./AmazonTrend.js')
-const amazonTrends = new AmazonTrend(state.data, 'amazonTrends')
-async function updateAmazonTrends() {
-  await amazonTrends.update()
+const trends = [
+  new TwitterTrend(state.data, 'twitterTrends', client),
+  new GoogleTrend(state.data, 'googleTrends'),
+  new BuhitterTrend(state.data, 'buhitterTrends'),
+  new GithubTrend(state.data, 'githubTrends'),
+  new AmazonTrend(state.data, 'amazonTrends'),
+]
+
+function counter(str,seq) {
+    return str.split(seq).length - 1;
 }
-
-
+function filter(name, cond) {
+  return function(t) {
+    if (cond(t)) {
+      console.log(`FILTERED[${name}]:`, t)
+      return true
+    } else {
+      return false
+    }
+  }
+}
+const filters = [
+  filter('すでにリツイートしてるなら弾く',                 t=>t.retweeted),
+  filter('最後が…で切れてるのは判定できないので弾く',     t=>t.text.match(/…$/)),
+  filter('長すぎるのは切れてるかもしれないので弾く',       t=>t.text.length>=138),
+  filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, /[#＃]/)>=2),
+  filter('不適切かもしれないのは弾く',                     t=>t.possibly_sensitive),
+  filter('トレンド系は弾く',                               t=>t.text.match(/トレンド/)),
+  filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロー/)),
+  filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロ爆/)),
+  filter('トレンド系は弾く',                               t=>t.text.match(/HOTワード/i)),
+  filter('amazonアフィリエイト系は弾く',                   t=>t.text.match(/amzn\.to/)),
+  filter('トレンド系は弾く',                               t=>t.user.screen_name.match(/trend/i)),
+  filter('トレンド系は弾く',                               t=>t.user.name.match(/トレンド/)),
+  filter('公式アカウントは弾く',                           t=>t.user.verified),
+  filter('公式アカウントは弾く',                           t=>t.user.name.match(/公式/)),
+  filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロー/)),
+  filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロ爆/)),
+  filter('bot系は弾く',                                    t=>t.user.name.match(/bot/i)),
+  filter('メンションは弾く',                               t=>counter(t.text, /^@/)>=1),
+  filter('メンションは弾く',                               t=>counter(t.text, /^.@/)>=1),
+  filter('メンションは弾く',                               t=>counter(t.text, /^..@/)>=1),
+  filter('メンションは弾く',                               t=>counter(t.text, /[^R][^T][^ ]@/)>=1), // 公式RTはOK
+  filter('RT欲しがりは弾く',                               t=>counter(t.text, /RT/)>=2),
+  filter('RT欲しがりは弾く',                               t=>counter(t.text, /ＲＴ/)>=2),
+  filter('いいね欲しがりは弾く',                           t=>t.text.match(/いいね/)),
+]
 async function search(trend) {
   const searchParams = {
     q: trend.word,
@@ -88,44 +109,6 @@ async function search(trend) {
     return null;
   }
   //console.log('tweets(before filter)', tweets.statuses.map(d=>{return {id_str: d.id_str, text: d.text, sname: d.user.screen_name, name: d.user.name, verified: d.user.verified}}))
-  function counter(str,seq) {
-      return str.split(seq).length - 1;
-  }
-  function filter(name, cond) {
-    return function(t) {
-      if (cond(t)) {
-        console.log(`FILTERED[${name}]:`, t)
-        return true
-      } else {
-        return false
-      }
-    }
-  }
-  const filters = [
-    filter('すでにリツイートしてるなら弾く',                 t=>t.retweeted),
-    filter('最後が…で切れてるのは判定できないので弾く',     t=>t.text.match(/…$/)),
-    filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>counter(t.text, /[#＃]/)>=2),
-    filter('不適切かもしれないのは弾く',                     t=>t.possibly_sensitive),
-    filter('トレンド系は弾く',                               t=>t.text.match(/トレンド/)),
-    filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロー/)),
-    filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロ爆/)),
-    filter('トレンド系は弾く',                               t=>t.text.match(/HOTワード/i)),
-    filter('amazonアフィリエイト系は弾く',                   t=>t.text.match(/amzn\.to/)),
-    filter('トレンド系は弾く',                               t=>t.user.screen_name.match(/trend/i)),
-    filter('トレンド系は弾く',                               t=>t.user.name.match(/トレンド/)),
-    filter('公式アカウントは弾く',                           t=>t.user.verified),
-    filter('公式アカウントは弾く',                           t=>t.user.name.match(/公式/)),
-    filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロー/)),
-    filter('フォロー勧誘系は弾く',                           t=>t.user.name.match(/フォロ爆/)),
-    filter('bot系は弾く',                                    t=>t.user.name.match(/bot/i)),
-    filter('メンションは弾く',                               t=>counter(t.text, /^@/)>=1),
-    filter('メンションは弾く',                               t=>counter(t.text, /^.@/)>=1),
-    filter('メンションは弾く',                               t=>counter(t.text, /^..@/)>=1),
-    filter('メンションは弾く',                               t=>counter(t.text, /[^R][^T][^ ]@/)>=1), // 公式RTはOK
-    filter('RT欲しがりは弾く',                               t=>counter(t.text, /RT/)>=2),
-    filter('RT欲しがりは弾く',                               t=>counter(t.text, /ＲＴ/)>=2),
-    filter('いいね欲しがりは弾く',                           t=>t.text.match(/いいね/)),
-  ]
   const filtered_tweets = tweets.statuses.filter(t=>{
     return !filters.some(f=>!!f(t))
   })
@@ -159,11 +142,7 @@ async function raw_retweet(id_str) {
 }
 
 function getAllTrends() {
-  return state.data.twitterTrends
-    .concat(state.data.googleTrends)
-    .concat(state.data.amazonTrends)
-    .concat(state.data.buhitterTrends)
-    .concat(state.data.githubTrends)
+  return _.flatten(trends.map(t=>t.getTrends()))
 }
 
 const YOKOKU_SIZE = 5
@@ -231,22 +210,10 @@ async function main() {
 async function genYokoku() {
   console.log('genYokoku')
 
-  await updateTwitterTrends();
-  console.log('updated twitterTrends:', state.data.twitterTrends.map(t=>t.word))
-
-  await updateGithubTrends();
-  //console.log('updated githubTrends:', state.data.githubTrends.map(t=>t.word))
-  console.log('updated githubTrends:', state.data.githubTrends)
-
-  await updateBuhitterTrends();
-  //console.log('updated buhitterTrends:', state.data.buhitterTrends.map(t=>t.word))
-  console.log('updated buhitterTrends:', state.data.buhitterTrends)
-
-  await updateGoogleTrends().catch(e=>console.log(e));
-  console.log('updated googleTrends:', state.data.googleTrends.map(t=>t.word))
-
-  await updateAmazonTrends().catch(e=>console.log(e));
-  console.log('updated amazonTrends:', state.data.amazonTrends.map(t=>t.word))
+  trends.forEach(async t=>{
+    await t.update()
+    console.log(`updated ${t.key}:`, t.getTrends().map(t=>t.word))
+  })
 
   let allTrends = getAllTrends()
 

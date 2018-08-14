@@ -22,7 +22,7 @@ class Trend {
     return this.getTrends() != null && this.getTrends().length != 0
   }
 
-  async update(opt) {
+  async update() {
     console.log('trend 1')
     if (this.hasTrends()) { return }
 
