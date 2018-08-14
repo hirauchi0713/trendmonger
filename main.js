@@ -42,15 +42,8 @@ state.load({
 })
 
 const twitterTrends = new TwitterTrend(state.data, 'twitterTrends', client)
-
-
 async function updateTwitterTrends() {
   await twitterTrends.update()
-}
-
-function errorHandler(err) {
-  console.log('err:', err)
-  return null
 }
 
 const GoogleTrend = require('./GoogleTrend.js')
@@ -71,34 +64,10 @@ async function updateGithubTrends() {
   await githubTrends.update()
 }
 
+const AmazonTrend = require('./AmazonTrend.js')
+const amazonTrends = new AmazonTrend(state.data, 'amazonTrends')
 async function updateAmazonTrends() {
-  const browser = await puppeteer.launch(puppOpt).catch(errorHandler)
-  if (! browser) return
-
-  const page = await browser.newPage().catch(errorHandler)
-  if (! page) { browser.close(); return }
-
-  const err = await page.goto('https://www.amazon.co.jp/trends/aps').catch(errorHandler)
-  if (! err) { browser.close(); return }
-
-  state.data.amazonTrends = await page.evaluate(() => {
-    let trends = [];
-    document.querySelectorAll('.trending-keyword').forEach(d=>{
-      trends.push(d.textContent.trim())
-    })
-    return trends
-      .map((d, index)=>{
-        return {
-          no: index+1,
-          word: d,
-          by: '(Amazon)'
-        }
-      });
-  }).catch(errorHandler)
-  if (! state.data.amazonTrends) {
-    state.data.amazonTrends = []
-  }
-  browser.close()
+  await amazonTrends.update()
 }
 
 
