@@ -17,8 +17,7 @@ class BuhitterTrend extends TrendScraper {
         el.querySelectorAll('.account-link').forEach(e=>words.push(e.textContent.replace(/[ \n]*/, '')))
         trends.push({
           no: no,
-          // word: words.join(' ').replace(/^ /, ''),
-          word: words[1],
+          word: words[2],
           by: '(Buhitter)',
           id_str: el.querySelector('.text-right a').getAttribute('href').split('/').pop()
         })
