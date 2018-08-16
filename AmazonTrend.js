@@ -19,7 +19,7 @@ class AmazonTrend extends TrendScraper {
           return {
             no: index+1,
             word: d,
-            by: '(Amazon)'
+            by: 'Amazon'
           }
         })
     }).catch(Trend.errorHandler)

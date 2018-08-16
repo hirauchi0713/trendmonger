@@ -18,8 +18,8 @@ class BuhitterTrend extends TrendScraper {
         trends.push({
           no: no,
           word: words[2],
-          by: '(Buhitter)',
-          id_str: el.querySelector('.text-right a').getAttribute('href').split('/').pop()
+          by: 'Buhitter',
+          url: el.querySelector('.text-right a').getAttribute('href')
         })
       }
       return trends

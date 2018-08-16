@@ -1,8 +1,9 @@
-const puppeteer = require('puppeteer')
 const puppOpt = { }
 if (process.env.PUPP_EXECUTABLE_PATH) {
   puppOpt.executablePath = process.env.PUPP_EXECUTABLE_PATH
 }
+const Puppeteer = require('./src/Puppeteer.js')
+const puppeteer = new Puppeteer(puppOpt)
 
 const Trend = require('./Trend')
 
@@ -14,39 +15,8 @@ class TrendScraper extends Trend {
   }
 
   async update() {
-    console.log('TrendScraper 1', this.key)
-    if (this.hasTrends()) { return }
-
-    console.log('TrendScraper 1-2', this.key)
-    const browser = await puppeteer.launch(puppOpt).catch(err=>{
-      console.log('puppeteer lanch err', err)
-      return null
-    })
-
-    console.log('TrendScraper 2', this.key)
-    //const page = await browser.newPage().catch(Trend.errorHandler)
-    const page = await browser.newPage().catch(err=>{
-      console.log('browser.newPage error', err)
-      return null
-    })
-    if (! page) { return }
-
-    console.log('TrendScraper 3', this.key)
-    const err = await page.goto(this.url).catch(Trend.errorHandler)
-    //const err = await page.goto(this.url).catch(err=>null)
-    if (! err) { return }
-
-    console.log('TrendScraper 4', this.key, this.updateMain)
-    //const trends = await page.evaluate(this.updateMain).catch(Trend.errorHandler)
-    const trends = await this.updateMain(page).catch(Trend.errorHandler)
-
-    console.log('TrendScraper 5', this.key, trends)
+    const trends = await puppeteer.get(this.url, this.updateMain)
     this.setTrends(trends)
-
-    console.log('TrendScraper 7', this.key)
-    browser.close()
-
-    console.log('TrendScraper end', this.key)
   }
 
 }

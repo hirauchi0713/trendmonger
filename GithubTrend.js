@@ -17,7 +17,7 @@ class GithubTrend extends TrendScraper {
         trends.push({
           no: idx+1,
           word: d.textContent.replace(/ (.*)/, ''),
-          by: '(Github)'
+          by: 'Github'
         })
       })
       console.log('github 3')

@@ -19,7 +19,7 @@ class HatenaTrend extends TrendScraper {
           return {
             no: index+1,
             word: d,
-            by: '(Hatena)'
+            by: 'はてな 注目キーワード'
           }
         })
     }).catch(Trend.errorHandler)

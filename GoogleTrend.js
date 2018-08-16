@@ -21,7 +21,7 @@ class GoogleTrend extends TrendScraper {
           return {
             no: index+1,
             word: d,
-            by: '(Google)'
+            by: 'Google'
           }
         });
     }).catch(Trend.errorHandler)

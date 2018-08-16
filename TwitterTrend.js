@@ -20,7 +20,7 @@ class TwitterTrend extends Trend {
       return {
         no: index+1,
         word: d.name,
-        by: ''
+        by: 'Twitter'
       }
     })
   }
