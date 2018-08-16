@@ -172,7 +172,7 @@ async function genYokoku() {
   setYokoku(filteredTrends);
   console.log('yokoku:', state.data.yokoku)
 
-  tweetYokoku();
+  // tweetYokoku();
 }
 
 process.on('tick', main);
