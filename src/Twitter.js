@@ -18,7 +18,7 @@ const filters = [
   filter('すでにリツイートしてるなら弾く',                 t=>t.retweeted),
   filter('最後が…で切れてるのは判定できないので弾く',     t=>t.text.match(/…$/)),
   filter('長すぎるのは切れてるかもしれないので弾く',       t=>t.text.length>=138),
-  filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>t.entities.hashtags >= 2),
+  filter('ハッシュが２個以上あるならスパムっぽいので弾く', t=>t.counter(t.text, /[#＃]/) >= 2),
   filter('不適切かもしれないのは弾く',                     t=>t.possibly_sensitive),
   filter('トレンド系は弾く',                               t=>t.text.match(/トレンド/)),
   filter('フォロー勧誘系は弾く',                           t=>t.text.match(/フォロー/)),
