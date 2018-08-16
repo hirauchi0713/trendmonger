@@ -5,8 +5,6 @@ const Store = require('./Store')
 
 require('dotenv').config();
 
-const TwitterTrend = require('./TwitterTrend.js')
-
 process.on('unhandledRejection', console.dir);
 
 function randomGet(array) {
@@ -36,26 +34,18 @@ state.load({
   yokoku        : [],
 })
 
-const GoogleTrend = require('./GoogleTrend.js')
-const BuhitterTrend = require('./BuhitterTrend.js')
-const GithubTrend = require('./GithubTrend.js')
-const AmazonTrend = require('./AmazonTrend.js')
-const HatenaTrend = require('./HatenaTrend.js')
-const HatebuTrend = require('./HatebuTrend.js')
-const YoutubeTrend= require('./YoutubeTrend.js')
-const BlogmuraTrend= require('./BlogmuraTrend.js')
-const QiitaTrend= require('./QiitaTrend.js')
+
 const trends = [
-  new QiitaTrend(state.data, 'qiitaTrends'),
-  new BlogmuraTrend(state.data, 'blogmuraTrends'),
-  new YoutubeTrend(state.data, 'youtubeTrends'),
-  new HatebuTrend(state.data, 'hatebuTrends'),
-  new TwitterTrend(state.data, 'twitterTrends', client),
-  new HatenaTrend(state.data, 'hatenaTrends'),
-  new GoogleTrend(state.data, 'googleTrends'),
-  new BuhitterTrend(state.data, 'buhitterTrends'),
-  new GithubTrend(state.data, 'githubTrends'),
-  new AmazonTrend(state.data, 'amazonTrends'),
+  new (require('./QiitaTrend.js')   )(state.data, 'qiitaTrends'),
+  new (require('./BlogmuraTrend.js'))(state.data, 'blogmuraTrends'),
+  new (require('./YoutubeTrend.js') )(state.data, 'youtubeTrends'),
+  new (require('./HatebuTrend.js')  )(state.data, 'hatebuTrends'),
+  new (require('./TwitterTrend.js') )(state.data, 'twitterTrends', client),
+  new (require('./HatenaTrend.js')  )(state.data, 'hatenaTrends'),
+  new (require('./GoogleTrend.js')  )(state.data, 'googleTrends'),
+  new (require('./BuhitterTrend.js'))(state.data, 'buhitterTrends'),
+  new (require('./GithubTrend.js')  )(state.data, 'githubTrends'),
+  new (require('./AmazonTrend.js')  )(state.data, 'amazonTrends'),
 ]
 
 async function search(trend) {

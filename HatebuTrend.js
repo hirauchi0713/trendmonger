@@ -21,7 +21,10 @@ class HatebuTrend extends TrendScraper {
           type: 'intro'
         })
       })
-      return trends
+      function to_i(n) {
+        return parseInt(n.rank.split(' ')[0])
+      }
+      return trends.sort((x,y)=>to_i(y) - to_i(x)).slice(0, 20)
     }).catch(Trend.errorHandler)
   }
 }
