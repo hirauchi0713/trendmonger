@@ -44,7 +44,9 @@ const HatenaTrend = require('./HatenaTrend.js')
 const HatebuTrend = require('./HatebuTrend.js')
 const YoutubeTrend= require('./YoutubeTrend.js')
 const BlogmuraTrend= require('./BlogmuraTrend.js')
+const QiitaTrend= require('./QiitaTrend.js')
 const trends = [
+  new QiitaTrend(state.data, 'qiitaTrends'),
   new BlogmuraTrend(state.data, 'blogmuraTrends'),
   new YoutubeTrend(state.data, 'youtubeTrends'),
   new HatebuTrend(state.data, 'hatebuTrends'),
