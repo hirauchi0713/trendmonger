@@ -43,7 +43,9 @@ const AmazonTrend = require('./AmazonTrend.js')
 const HatenaTrend = require('./HatenaTrend.js')
 const HatebuTrend = require('./HatebuTrend.js')
 const YoutubeTrend= require('./YoutubeTrend.js')
+const BlogmuraTrend= require('./BlogmuraTrend.js')
 const trends = [
+  new BlogmuraTrend(state.data, 'blogmuraTrends'),
   new YoutubeTrend(state.data, 'youtubeTrends'),
   new HatebuTrend(state.data, 'hatebuTrends'),
   new TwitterTrend(state.data, 'twitterTrends', client),
