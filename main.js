@@ -41,7 +41,9 @@ const BuhitterTrend = require('./BuhitterTrend.js')
 const GithubTrend = require('./GithubTrend.js')
 const AmazonTrend = require('./AmazonTrend.js')
 const HatenaTrend = require('./HatenaTrend.js')
+const HatebuTrend = require('./HatebuTrend.js')
 const trends = [
+  new HatebuTrend(state.data, 'hatebuTrends'),
   new TwitterTrend(state.data, 'twitterTrends', client),
   new HatenaTrend(state.data, 'hatenaTrends'),
   new GoogleTrend(state.data, 'googleTrends'),
@@ -80,7 +82,7 @@ async function raw_retweet(tweet, trend) {
   // const res = await client.post('statuses/retweet/'+id_str, {id: id_str})
   const res = await tw2.tweetIntroduction({
       source: trend.by,
-      rank: `${trend.no}位`,
+      rank: trend.rank ? trend.rank : `${trend.no}位`,
       url: trend.url
     })
     .catch(e => {
@@ -133,7 +135,7 @@ async function main() {
   state.data.searched.push(trend.word)
   console.log('target trend:', trend);
 
-  if (trend.by === 'Buhitter') {
+  if (trend.type === 'intro') {
     const res = await raw_retweet(trend.id_str, trend);
     console.log('result:', res != null ? 'ok' : 'ng');
   } else {

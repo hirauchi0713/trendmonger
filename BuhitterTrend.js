@@ -15,11 +15,13 @@ class BuhitterTrend extends TrendScraper {
         const el = document.getElementById(`no${no}`)
         const words = []
         el.querySelectorAll('.account-link').forEach(e=>words.push(e.textContent.replace(/[ \n]*/, '')))
+        const url = el.querySelector('.text-right a').getAttribute('href')
         trends.push({
           no: no,
-          word: words[2],
+          word: url,
           by: 'Buhitter',
-          url: el.querySelector('.text-right a').getAttribute('href')
+          url: url,
+          type: 'intro'
         })
       }
       return trends
