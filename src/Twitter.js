@@ -53,7 +53,7 @@ module.exports = class Twitter {
       lang: 'ja',
       locale: 'ja',
       result_type: 'recent',
-      count: 100
+      count: 20
     }
     const tweets = await this.client.get('search/tweets', opt).catch(err=>{
       console.log('Twitter keywordSearch Error: client.get(search/tweets)', opt, err)
