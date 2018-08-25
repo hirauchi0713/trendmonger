@@ -2,7 +2,7 @@ const puppOpt = { }
 if (process.env.PUPP_EXECUTABLE_PATH) {
   puppOpt.executablePath = process.env.PUPP_EXECUTABLE_PATH
 }
-const Puppeteer = require('./src/Puppeteer.js')
+const Puppeteer = require('../Puppeteer.js')
 const puppeteer = new Puppeteer(puppOpt)
 
 const Trend = require('./Trend')

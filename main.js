@@ -1,7 +1,7 @@
 const twitter = require('twitter');
 const _ = require('underscore');
 const Store = require('./Store')
-
+const logger = require('gorilog')('main')
 
 require('dotenv').config();
 
@@ -36,22 +36,22 @@ state.load({
 
 
 const trends = [
-  new (require('./QiitaTrend.js')   )(state.data, 'qiitaTrends'),
-  new (require('./BlogmuraTrend.js'))(state.data, 'blogmuraTrends'),
-  new (require('./YoutubeTrend.js') )(state.data, 'youtubeTrends'),
-  new (require('./HatebuTrend.js')  )(state.data, 'hatebuTrends'),
-  new (require('./TwitterTrend.js') )(state.data, 'twitterTrends', client),
-  new (require('./HatenaTrend.js')  )(state.data, 'hatenaTrends'),
-  new (require('./GoogleTrend.js')  )(state.data, 'googleTrends'),
-  new (require('./BuhitterTrend.js'))(state.data, 'buhitterTrends'),
-  new (require('./GithubTrend.js')  )(state.data, 'githubTrends'),
-  new (require('./AmazonTrend.js')  )(state.data, 'amazonTrends'),
+  new (require('./src/trend_sources/QiitaTrend.js')   )(state.data, 'qiitaTrends'),
+  new (require('./src/trend_sources/BlogmuraTrend.js'))(state.data, 'blogmuraTrends'),
+  new (require('./src/trend_sources/YoutubeTrend.js') )(state.data, 'youtubeTrends'),
+  new (require('./src/trend_sources/HatebuTrend.js')  )(state.data, 'hatebuTrends'),
+  new (require('./src/trend_sources/TwitterTrend.js') )(state.data, 'twitterTrends', client),
+  new (require('./src/trend_sources/HatenaTrend.js')  )(state.data, 'hatenaTrends'),
+  new (require('./src/trend_sources/GoogleTrend.js')  )(state.data, 'googleTrends'),
+  new (require('./src/trend_sources/BuhitterTrend.js'))(state.data, 'buhitterTrends'),
+  new (require('./src/trend_sources/GithubTrend.js')  )(state.data, 'githubTrends'),
+  new (require('./src/trend_sources/AmazonTrend.js')  )(state.data, 'amazonTrends'),
 ]
 
 async function search(trend) {
-  console.log('search: start search/tweets')
+  logger.info('search: start search/tweets')
   const filtered_tweets = await tw2.keywordSearch(trend.word)
-  console.log('search: end search/tweets')
+  logger.info('search: end search/tweets')
   return _.shuffle(filtered_tweets)[0]
 }
 
@@ -68,7 +68,7 @@ async function retweet(tweet, trend) {
       id_str: tweet.id_str
     })
     .catch(e => {
-      console.log(JSON.stringify(e, null, '  '));
+      logger.error(JSON.stringify(e, null, '  '));
       return null;
     })
   return res;
@@ -82,7 +82,7 @@ async function raw_retweet(tweet, trend) {
       url: trend.url
     })
     .catch(e => {
-      console.log(JSON.stringify(e, null, '  '));
+      logger.error(JSON.stringify(e, null, '  '));
       return null;
     })
   return res;
@@ -99,15 +99,15 @@ function setYokoku(filteredTrends) {
     return;
   }
 
-  console.log('### short yokoku ###')
+  logger.debug('### short yokoku ###')
   state.data.yokoku = filteredTrends;
-  console.log('#1. before yokoku:', state.data.yokoku)
+  logger.debug('#1. before yokoku:', state.data.yokoku)
   state.data.searched = [];
   filteredTrends = getAllTrends().filter(t=>!state.data.yokoku.find(y=>y.word==t.word))
-  console.log('#2. twitterTrends:', state.data.twitterTrends)
-  console.log('#3. filteredTrends:', filteredTrends)
+  logger.debug('#2. twitterTrends:', state.data.twitterTrends)
+  logger.debug('#3. filteredTrends:', filteredTrends)
   state.data.yokoku = state.data.yokoku.concat(_.shuffle(filteredTrends).slice(0, YOKOKU_SIZE-state.data.yokoku.length));
-  console.log('#4. after yokoku:', state.data.yokoku)
+  logger.debug('#4. after yokoku:', state.data.yokoku)
 }
 
 async function tweetYokoku() {
@@ -116,12 +116,12 @@ async function tweetYokoku() {
   }).join("\n")
 
   const text = `【次${YOKOKU_SIZE}回予告】\n${list}`.substr(0, 140)
-  console.log('text:', text)
+  logger.debug('text:', text)
   await tw2.tweet(text)
 }
 
 async function main() {
-  console.log('---------start main---------')
+  logger.debug('---------start main---------')
 
   if (state.data.yokoku.length == 0) {
     await genYokoku();
@@ -129,33 +129,33 @@ async function main() {
 
   const trend = state.data.yokoku.shift();
   state.data.searched.push(trend.word)
-  console.log('target trend:', trend);
+  logger.debug('target trend:', trend);
 
   if (trend.type === 'intro') {
     const res = await raw_retweet(trend.id_str, trend);
-    console.log('result:', res != null ? 'ok' : 'ng');
+    logger.info('result:', res != null ? 'ok' : 'ng');
   } else {
     const tweet = await search(trend);
     if (tweet) {
-      console.log('tweet:', {id_str: tweet.id_str, text: tweet.text, verified: tweet.user.verified });
+      logger.trace('tweet:', {id_str: tweet.id_str, text: tweet.text, verified: tweet.user.verified });
 
       const res = await retweet(tweet, trend);
-      console.log('result:', res != null ? 'ok' : 'ng');
+      logger.info('result:', res != null ? 'ok' : 'ng');
     } else {
-      console.log('no tweet');
+      logger.info('no tweet');
     }
   }
   state.save()
-  console.log('---------end main---------')
+  logger.debug('---------end main---------')
 }
 
 async function genYokoku() {
-  console.log('genYokoku')
+  logger.debug('genYokoku')
 
   for(let i = 0; i < trends.length; i++) {
     const t = trends[i]
     await t.update()
-    console.log(`updated ${t.key}:`, t.getTrends().map(t=>t.word))
+    logger.debug(`updated ${t.key}:`, t.getTrends().map(t=>t.word))
   }
 
   let allTrends = getAllTrends()
@@ -165,10 +165,10 @@ async function genYokoku() {
     state.data.searched = [];
     filteredTrends = getAllTrends()
   }
-  console.log('filteredTrends:', filteredTrends.map(t=>t.word))
+  logger.trace('filteredTrends:', filteredTrends.map(t=>t.word))
 
   setYokoku(filteredTrends);
-  console.log('yokoku:', state.data.yokoku)
+  logger.trace('yokoku:', state.data.yokoku)
 
   // tweetYokoku();
 }
@@ -185,6 +185,6 @@ function tick() {
   try {
     tick();
   } catch(e) {
-    console.error(e)
+    logger.error(e)
   }
 })()
