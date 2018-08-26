@@ -1,4 +1,5 @@
 const twitter = require('twitter');
+const logger = require('gorilog')('Twitter')
 
 function counter(str,seq) {
     return str.split(seq).length - 1;
@@ -6,7 +7,7 @@ function counter(str,seq) {
 function filter(name, cond) {
   return function(t) {
     if (cond(t)) {
-      console.log(`FILTERED[${name}]:`, t)
+      logger.trace(`FILTERED[${name}]:`, t)
       return true
     } else {
       return false
@@ -56,7 +57,7 @@ module.exports = class Twitter {
       count: 20
     }
     const tweets = await this.client.get('search/tweets', opt).catch(err=>{
-      console.log('Twitter keywordSearch Error: client.get(search/tweets)', opt, err)
+      logger.error('Twitter keywordSearch Error: client.get(search/tweets)', opt, err)
       return null
     })
     if (! tweets) { return [] }
@@ -68,12 +69,13 @@ module.exports = class Twitter {
 
   async tweet(text) {
     const tweet = await this.client.post('statuses/update', { status: text }).catch(err=>{
-      console.log('tweet error:', err)
+      logger.error('tweet error:', err)
     })
     if (! tweet) {
       return false
     }
-    console.log('tweet ok:', tweet)
+    logger.debug('tweet: ok')
+    logger.trace('tweet:', tweet)
     return true
   }
 

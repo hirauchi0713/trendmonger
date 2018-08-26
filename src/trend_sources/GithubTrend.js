@@ -1,28 +1,30 @@
 const Trend = require('./Trend')
 const TrendScraper = require('./TrendScraper')
 const TargetURL = 'http://github-trends.ryotarai.info/rss/github_trends_all_daily.rss'
+const logger = require('gorilog')('trend_sources/GithubTrend')
 
 class GithubTrend extends TrendScraper {
   constructor(state, key) {
-    console.log('GithubTrend.constructor:', state, key, TargetURL)
+    logger.debug('constructor', key, TargetURL)
     super(state, key, TargetURL)
   }
 
   async updateMain(page) {
-    return await page.evaluate(() => {
-      console.log('github 1')
+    logger.debug('parsing...')
+    const trends = await page.evaluate(() => {
       const trends = []
       document.querySelectorAll('item title').forEach((d,idx)=>{
-        console.log('github 2')
         trends.push({
           no: idx+1,
           word: d.textContent.replace(/ (.*)/, ''),
           by: 'Github'
         })
       })
-      console.log('github 3')
-      return trends.slice(0, 10) // 上位10位
+      return trends
     }).catch(Trend.errorHandler)
+    logger.debug('parsed', trends.length)
+    logger.trace('trends', trends)
+    return trends.slice(0, 20) // 上位20位
   }
 
 }

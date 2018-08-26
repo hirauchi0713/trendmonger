@@ -1,4 +1,5 @@
 const pup = require('puppeteer')
+const logger = require('gorilog')('Puppeteer')
 
 module.exports = class Puppeteer {
   constructor(opt) {
@@ -6,37 +7,37 @@ module.exports = class Puppeteer {
   }
 
   async get(url, func) {
-    console.log('Puppeteer', 1, url)
+    logger.debug('Puppeteer', 1, url)
     const browser = await pup.launch(this.opt).catch(err=>{
-      console.log('puppeteer.lanch err', err)
+      logger.error('puppeteer.lanch err', err)
       return null
     })
     if (! browser) { return null }
 
-    console.log('Puppeteer', 2, url)
+    logger.debug('Puppeteer', 2, url)
     const page = await browser.newPage().catch(err=>{
-      console.log('browser.newPage error', err)
+      logger.error('browser.newPage error', err)
       return null
     })
     if (! page) { return null }
 
-    console.log('Puppeteer', 3, url)
+    logger.debug('Puppeteer', 3, url)
     const err = await page.goto(url).catch(err=>{
-      console.log('page.goto error', err)
+      logger.error('page.goto error', err)
       return null
     })
     if (! err) { return null }
 
-    console.log('Puppeteer', 4, url)
+    logger.debug('Puppeteer', 4, url)
     const result = await func(page).catch(err=>{
-      console.log('func error', err)
+      logger.error('func error', err)
       return null
     })
 
-    console.log('Puppeteer', 5, url)
+    logger.debug('Puppeteer', 5, url)
     browser.close()
 
-    console.log('Puppeteer', 'end', url)
+    logger.debug('Puppeteer', 'end', url)
     return result
   }
 }

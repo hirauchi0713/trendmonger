@@ -1,7 +1,8 @@
+const logger = require('gorilog')('trend_source/Trend')
 
 class Trend {
   static errorHandler(err) {
-    console.log('err:', err)
+    logger.error('err:', err)
     return null
   }
 
@@ -24,13 +25,13 @@ class Trend {
   }
 
   async update() {
-    console.log('trend 1')
-    if (this.hasTrends()) { return }
+    logger.debug('update start')
+    if (this.hasTrends()) { logger.debug('skip update'); return }
 
-    console.log('trend 2')
+    logger.debug('updating...')
     this.setTrends(await this.updateMain())
 
-    console.log('trend 3')
+    logger.debug('update finished')
   }
 
   async updateMain() {

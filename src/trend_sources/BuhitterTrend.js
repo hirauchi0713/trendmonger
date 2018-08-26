@@ -1,6 +1,7 @@
 const Trend = require('./Trend')
 const TrendScraper = require('./TrendScraper')
 const TargetURL = 'https://buhitter.com/trend'
+const logger = require('gorilog')('trend_sources/BuhitterTrend')
 
 class BuhitterTrend extends TrendScraper {
   constructor(state, key) {
@@ -8,7 +9,8 @@ class BuhitterTrend extends TrendScraper {
   }
 
   async updateMain(page) {
-    return await page.evaluate(() => {
+    logger.debug('parsing...')
+    const trends =  await page.evaluate(() => {
       const trends = [];
       for(let i = 0; i < 20; i++) {
         const no = i+1
@@ -26,6 +28,9 @@ class BuhitterTrend extends TrendScraper {
       }
       return trends
     }).catch(Trend.errorHandler)
+    logger.debug('parsed', trends.length)
+    logger.trace('trends', trends)
+    return trends
   }
 }
 
