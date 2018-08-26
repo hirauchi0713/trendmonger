@@ -22,6 +22,10 @@ module.exports = class Puppeteer {
     if (! page) { return null }
 
     logger.debug('Puppeteer', 3, url)
+    const myua = 'トレンドbot@trendmonger1'
+    logger.trace('myua:', myua)
+    await page.setUserAgent(myua)
+    logger.trace('UA:', await page.evaluate('navigator.userAgent'))
     const err = await page.goto(url).catch(err=>{
       logger.error('page.goto error', err)
       return null
