@@ -152,11 +152,8 @@ async function main() {
 async function genYokoku() {
   logger.debug('genYokoku')
 
-  for(let i = 0; i < trends.length; i++) {
-    const t = trends[i]
-    await t.update()
-    logger.debug(`updated ${t.key}:`, t.getTrends().map(t=>t.word))
-  }
+  await Promise.all(trends.map(e=>e.update()))
+  logger.debug('yokoku updated')
 
   let allTrends = getAllTrends()
 
