@@ -40,12 +40,12 @@ const trends = [
   new (require('./src/trend_sources/BlogmuraTrend.js'))(state.data, 'blogmuraTrends'),
   new (require('./src/trend_sources/YoutubeTrend.js') )(state.data, 'youtubeTrends'),
   new (require('./src/trend_sources/HatebuTrend.js')  )(state.data, 'hatebuTrends'),
-  new (require('./src/trend_sources/TwitterTrend.js') )(state.data, 'twitterTrends', client),
-  new (require('./src/trend_sources/HatenaTrend.js')  )(state.data, 'hatenaTrends'),
-  new (require('./src/trend_sources/GoogleTrend.js')  )(state.data, 'googleTrends'),
+//  new (require('./src/trend_sources/TwitterTrend.js') )(state.data, 'twitterTrends', client),
+//  new (require('./src/trend_sources/HatenaTrend.js')  )(state.data, 'hatenaTrends'),
+//  new (require('./src/trend_sources/GoogleTrend.js')  )(state.data, 'googleTrends'),
   new (require('./src/trend_sources/BuhitterTrend.js'))(state.data, 'buhitterTrends'),
-  new (require('./src/trend_sources/GithubTrend.js')  )(state.data, 'githubTrends'),
-  new (require('./src/trend_sources/AmazonTrend.js')  )(state.data, 'amazonTrends'),
+//  new (require('./src/trend_sources/GithubTrend.js')  )(state.data, 'githubTrends'),
+//  new (require('./src/trend_sources/AmazonTrend.js')  )(state.data, 'amazonTrends'),
 ]
 
 async function search(trend) {
