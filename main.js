@@ -3,6 +3,8 @@ const _ = require('underscore');
 const Store = require('./Store')
 const logger = require('gorilog')('main')
 
+const INTERVAL_MIN = 10
+
 require('dotenv').config();
 
 process.on('unhandledRejection', console.dir);
@@ -174,7 +176,7 @@ process.on('tick', main);
 
 function tick() {
   process.emit('tick');
-  setTimeout(tick, 1000*60*5)
+  setTimeout(tick, 1000*60*INTERVAL_MIN)
 }
 
 
