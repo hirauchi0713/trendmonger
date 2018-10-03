@@ -1,0 +1,2 @@
+# trendbot
+*/5 * * * * cd /home/admin/proj/trendmonger && node main.js

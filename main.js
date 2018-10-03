@@ -172,18 +172,20 @@ async function genYokoku() {
   // tweetYokoku();
 }
 
-process.on('tick', main);
+// process.on('tick', main);
+// 
+// function tick() {
+//   process.emit('tick');
+//   setTimeout(tick, 1000*60*INTERVAL_MIN)
+// }
+// 
+// 
+// !(async() => {
+//   try {
+//     tick();
+//   } catch(e) {
+//     logger.error(e)
+//   }
+// })()
 
-function tick() {
-  process.emit('tick');
-  setTimeout(tick, 1000*60*INTERVAL_MIN)
-}
-
-
-!(async() => {
-  try {
-    tick();
-  } catch(e) {
-    logger.error(e)
-  }
-})()
+main()
